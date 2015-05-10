@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">生活助手</string>
+
+    <string name="nearby">周边</string>
+
+    <string name="route">路线</string>
+
+    <string name="more">分享</string>
+
+</resources>
