@@ -49,7 +49,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	private Button mNearbyBtn = null;
 	private Button mRouteBtn = null;
 	// 定位客户端
-	private LocationClient mLocationClient;
+	private LocationClient mMyLocationClient;
 	// 定位监听器
 	private MyLocationListener mLocationListener;
 	// 是否是第一次定位
@@ -113,7 +113,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public void onMapStatusChange(MapStatus arg0) {
-
+				
 			}
 		});
 		// 初始化周边按钮控件
@@ -136,9 +136,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initLocation() {
-		mLocationClient = new LocationClient(this);
+		mMyLocationClient = new LocationClient(mContext);
 		mLocationListener = new MyLocationListener();
-		mLocationClient.registerLocationListener(mLocationListener);
+		mMyLocationClient.registerLocationListener(mLocationListener);
 
 		LocationClientOption option = new LocationClientOption();
 		option.setAddrType("all");
@@ -147,7 +147,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		option.setOpenGps(true);
 		option.setScanSpan(3000);
 
-		mLocationClient.setLocOption(option);
+		mMyLocationClient.setLocOption(option);
 
 		// 初始化方向传感器
 		mOrientationListener = new MyOrientationListener(mContext);
@@ -242,8 +242,8 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onStart();
 		// 关闭定位
 		mBaiduMap.setMyLocationEnabled(true);
-		if (!mLocationClient.isStarted()) {
-			mLocationClient.start();
+		if (!mMyLocationClient.isStarted()) {
+			mMyLocationClient.start();
 		}
 		// 开启方向传感器监听
 		mOrientationListener.start();
@@ -254,7 +254,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onStop();
 		// 停止定位
 		mBaiduMap.setMyLocationEnabled(false);
-		mLocationClient.stop();
+		mMyLocationClient.stop();
 		// 停止方向传感器监听
 		mOrientationListener.stop();
 

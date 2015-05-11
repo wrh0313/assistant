@@ -81,7 +81,6 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 		mDialog = new ProgressDialog(mContext);
 		mDialog.setMessage(" 正在获取位置信息... ");
 		mDialog.setCanceledOnTouchOutside(false);
-		mDialog.setIndeterminate(true);
 		mDialog.show();
 	}
 
@@ -108,14 +107,14 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 	public void onItemClick(View v) {
 		if (v.getClass() == TextView.class) {
 			if (mLatLng == null) {
-				Toast.makeText(mContext, " 无法获取当前位置,请检查网络  ", Toast.LENGTH_SHORT)
-						.show();
+				Toast.makeText(mContext, " 无法获取当前位置,请检查网络  ",
+						Toast.LENGTH_SHORT).show();
 				return;
 			}
 			TextView tvChild = (TextView) v;
 			PoiNearbySearchOption option = new PoiNearbySearchOption();
 			option.location(mLatLng);
-			option.keyword(GOOUT[1]);
+			option.keyword(tvChild.getText().toString().trim());
 			option.pageNum(10);
 			option.radius(3000);
 			mPoiSearch.searchNearby(option);
@@ -159,6 +158,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 					Log.i("wrh", poiInfo.name);
 					Log.i("wrh", poiInfo.address);
 					Log.i("wrh", "" + poiInfo.type);
+					Log.i("wrh", result.getAllPoi().size()+"");
 				}
 			}
 		}

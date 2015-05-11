@@ -109,7 +109,6 @@ public class RouteActivity extends Activity implements OnClickListener {
 		option.setScanSpan(3000);
 
 		mLocationClient.setLocOption(option);
-		mLocationClient.start();
 
 	}
 
@@ -372,6 +371,11 @@ public class RouteActivity extends Activity implements OnClickListener {
 			}
 			break;
 		case RoutePointActivity.RSP_CODE_MY_LOCATON:
+			if (mLocation == null) {
+				Toast.makeText(mContext, " 无法获取当前位置，请检查网络... ",
+						Toast.LENGTH_SHORT).show();
+				return;
+			}
 			if (requestCode == REQ_CODE_STARTPOINT) {
 				mStartPoint.setText("我的位置");
 				sCity = mLocation.getCity();
@@ -389,4 +393,13 @@ public class RouteActivity extends Activity implements OnClickListener {
 			break;
 		}
 	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		if (!mLocationClient.isStarted()) {
+			mLocationClient.start();
+		}
+	}
+
 }
