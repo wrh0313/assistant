@@ -8,9 +8,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -53,6 +53,11 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private static final String[] LIFE = { "[生活]", "银行", "超市", "厕所" };
 	private static final String[] LEISURE = { "[休闲]", "网吧", "KTV", "洗浴" };
 	private ProgressDialog mDialog;
+	private int mCurrentBtnClick;
+	private static final int ALLBTN = 1;
+	private static final int DELICACTBTN = 2;
+	private static final int ENTERTAINMENTBTN = 3;
+	private static final int HOTELBTN = 4;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -114,9 +119,72 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 		mHotelBtn.setOnClickListener(this);
 		mDelicacyBtn.setOnClickListener(this);
 		mEntertainmentBtn.setOnClickListener(this);
-		
+
 		mInterestList.setVisibility(View.INVISIBLE);
 		mUpdateProgressBar.setVisibility(View.VISIBLE);
+
+		setClickBtn(ALLBTN);
+		// mAllBtn.setTextColor(getResources().getColor(R.color.dark_blue));
+	}
+
+	private void setClickBtn(int typeBtn) {
+		showBtnStatus(typeBtn);
+	}
+
+	// 清除状态
+	private void clearBtnStatus(int typeBtn) {
+		if (mCurrentBtnClick == typeBtn) {
+			return;
+		}
+		switch (mCurrentBtnClick) {
+		case ALLBTN:
+			mAllBtn.setTextColor(getResources().getColor(R.color.black));
+			break;
+		case DELICACTBTN:
+			mDelicacyBtn.setTextColor(getResources().getColor(R.color.black));
+			break;
+		case ENTERTAINMENTBTN:
+			mEntertainmentBtn.setTextColor(getResources().getColor(
+					R.color.black));
+			break;
+		case HOTELBTN:
+			mHotelBtn.setTextColor(getResources().getColor(R.color.black));
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	// 设置点击之后的状态
+	private void showBtnStatus(int typeBtn) {
+		clearBtnStatus(typeBtn);
+		switch (typeBtn) {
+		case ALLBTN:
+			mAllBtn.setTextColor(getResources().getColor(R.color.dark_blue));
+			mCurrentBtnClick = ALLBTN;
+			break;
+		case DELICACTBTN:
+			clearBtnStatus(typeBtn);
+			mDelicacyBtn.setTextColor(getResources()
+					.getColor(R.color.dark_blue));
+			mCurrentBtnClick = DELICACTBTN;
+			break;
+		case ENTERTAINMENTBTN:
+			clearBtnStatus(typeBtn);
+			mEntertainmentBtn.setTextColor(getResources().getColor(
+					R.color.dark_blue));
+			mCurrentBtnClick = ENTERTAINMENTBTN;
+			break;
+		case HOTELBTN:
+			clearBtnStatus(typeBtn);
+			mHotelBtn.setTextColor(getResources().getColor(R.color.dark_blue));
+			mCurrentBtnClick = HOTELBTN;
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	private void addNearbyQCheckItem(String[] item) {
@@ -209,13 +277,16 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.nearbyAllBtn:
-
+			setClickBtn(ALLBTN);
 			break;
 		case R.id.nearbyDelicacyBtn:
+			setClickBtn(DELICACTBTN);
 			break;
 		case R.id.nearbyEntertainmentBtn:
+			setClickBtn(ENTERTAINMENTBTN);
 			break;
 		case R.id.nearbyHotelBtn:
+			setClickBtn(HOTELBTN);
 			break;
 
 		default:
