@@ -6,9 +6,13 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,12 +32,15 @@ import com.wrh.assistant.R;
 import com.wrh.assistant.view.NearbyQCheckItem;
 import com.wrh.assistant.view.NearbyQCheckItem.OnClickItemListener;
 
-public class NearbyActivity extends Activity implements OnClickItemListener {
+public class NearbyActivity extends Activity implements OnClickItemListener,
+		OnClickListener {
 
 	private TextView mAllBtn;
 	private TextView mHotelBtn;
 	private TextView mDelicacyBtn;
 	private TextView mEntertainmentBtn;
+	private ProgressBar mUpdateProgressBar;
+	private InterestListAdapter mAdapter;
 	private ListView mInterestList;
 	private PoiSearch mPoiSearch;
 	private LinearLayout mNearbyQCheck;
@@ -91,15 +98,25 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 	}
 
 	private void initViews() {
-		mNearbyQCheck = (LinearLayout) findViewById(R.id.nearbyQuickCheck);
 		mAllBtn = (TextView) findViewById(R.id.nearbyAllBtn);
 		mHotelBtn = (TextView) findViewById(R.id.nearbyHotelBtn);
 		mDelicacyBtn = (TextView) findViewById(R.id.nearbyDelicacyBtn);
+		mInterestList = (ListView) findViewById(R.id.neabyInterestList);
+		mNearbyQCheck = (LinearLayout) findViewById(R.id.nearbyQuickCheck);
 		mEntertainmentBtn = (TextView) findViewById(R.id.nearbyEntertainmentBtn);
+		mUpdateProgressBar = (ProgressBar) findViewById(R.id.nearbyUpdateProgress);
 
 		addNearbyQCheckItem(GOOUT);
 		addNearbyQCheckItem(LIFE);
 		addNearbyQCheckItem(LEISURE);
+
+		mAllBtn.setOnClickListener(this);
+		mHotelBtn.setOnClickListener(this);
+		mDelicacyBtn.setOnClickListener(this);
+		mEntertainmentBtn.setOnClickListener(this);
+		
+		mInterestList.setVisibility(View.INVISIBLE);
+		mUpdateProgressBar.setVisibility(View.VISIBLE);
 	}
 
 	private void addNearbyQCheckItem(String[] item) {
@@ -186,5 +203,47 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 			mLatLng = new LatLng(location.getLatitude(),
 					location.getLongitude());
 		}
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.nearbyAllBtn:
+
+			break;
+		case R.id.nearbyDelicacyBtn:
+			break;
+		case R.id.nearbyEntertainmentBtn:
+			break;
+		case R.id.nearbyHotelBtn:
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	public class InterestListAdapter extends BaseAdapter {
+
+		@Override
+		public int getCount() {
+			return 0;
+		}
+
+		@Override
+		public Object getItem(int position) {
+			return null;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return 0;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			return null;
+		}
+
 	}
 }
