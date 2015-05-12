@@ -1,5 +1,6 @@
 package com.wrh.assistant.activity;
 
+import android.R.bool;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
@@ -35,29 +37,31 @@ import com.wrh.assistant.view.NearbyQCheckItem.OnClickItemListener;
 public class NearbyActivity extends Activity implements OnClickItemListener,
 		OnClickListener {
 
-	private TextView mAllBtn;
+	private Context mContext;
+	private Button mReloadBtn;
 	private TextView mHotelBtn;
-	private TextView mDelicacyBtn;
-	private TextView mEntertainmentBtn;
-	private ProgressBar mUpdateProgressBar;
-	private InterestListAdapter mAdapter;
-	private ListView mInterestList;
 	private PoiSearch mPoiSearch;
+	private TextView mDelicacyBtn;
+	private LatLng mLatLng = null;
+	private ListView mInterestList;
+	private LinearLayout mReloadLayout;
 	private LinearLayout mNearbyQCheck;
+	private TextView mEntertainmentBtn;
+	private InterestListAdapter mAdapter;
+	private ProgressBar mUpdateProgressBar;
 	private LocationClient mLocationClient;
 	private MyLocationListener mLocationListener;
 	private OnGetPoiResult mOnGetPoiResultListener;
-	private LatLng mLatLng = null;
-	private Context mContext;
 	private static final String[] GOOUT = { "[出行]", "公交站", "加油站", "停车场" };
 	private static final String[] LIFE = { "[生活]", "银行", "超市", "厕所" };
 	private static final String[] LEISURE = { "[休闲]", "网吧", "KTV", "洗浴" };
 	private ProgressDialog mDialog;
+	private boolean isNetWorkConnected;
+	private boolean isFirst = true;
 	private int mCurrentBtnClick;
-//	private static final int ALLBTN = 1;
-	private static final int DELICACTBTN = 2;
-	private static final int ENTERTAINMENTBTN = 3;
-	private static final int HOTELBTN = 4;
+	private static final int DELICACTBTN = 1;
+	private static final int ENTERTAINMENTBTN = 2;
+	private static final int HOTELBTN = 3;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -103,31 +107,53 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	}
 
 	private void initViews() {
-//		mAllBtn = (TextView) findViewById(R.id.nearbyAllBtn);
 		mHotelBtn = (TextView) findViewById(R.id.nearbyHotelBtn);
 		mDelicacyBtn = (TextView) findViewById(R.id.nearbyDelicacyBtn);
 		mInterestList = (ListView) findViewById(R.id.neabyInterestList);
 		mNearbyQCheck = (LinearLayout) findViewById(R.id.nearbyQuickCheck);
 		mEntertainmentBtn = (TextView) findViewById(R.id.nearbyEntertainmentBtn);
 		mUpdateProgressBar = (ProgressBar) findViewById(R.id.nearbyUpdateProgress);
+		mReloadLayout = (LinearLayout) findViewById(R.id.nearbyReloadLayout);
+		mReloadBtn = (Button) findViewById(R.id.nearbyReload);
 
 		addNearbyQCheckItem(GOOUT);
 		addNearbyQCheckItem(LIFE);
 		addNearbyQCheckItem(LEISURE);
 
-		mAllBtn.setOnClickListener(this);
 		mHotelBtn.setOnClickListener(this);
+		mReloadBtn.setOnClickListener(this);
 		mDelicacyBtn.setOnClickListener(this);
 		mEntertainmentBtn.setOnClickListener(this);
 
-		mInterestList.setVisibility(View.INVISIBLE);
-		mUpdateProgressBar.setVisibility(View.VISIBLE);
-
+		showProgessBarVisible();
 		setClickBtn(DELICACTBTN);
+	}
+
+	private void showProgessBarVisible() {
+		mInterestList.setVisibility(View.INVISIBLE);
+		mReloadLayout.setVisibility(View.INVISIBLE);
+		mUpdateProgressBar.setVisibility(View.VISIBLE);
+	}
+
+	private void showInterestListVisible() {
+		mReloadLayout.setVisibility(View.INVISIBLE);
+		mUpdateProgressBar.setVisibility(View.INVISIBLE);
+		mInterestList.setVisibility(View.VISIBLE);
+	}
+
+	private void showReloadLayoutVisible() {
+		mUpdateProgressBar.setVisibility(View.INVISIBLE);
+		mInterestList.setVisibility(View.INVISIBLE);
+		mReloadLayout.setVisibility(View.VISIBLE);
+
 	}
 
 	private void setClickBtn(int typeBtn) {
 		showBtnStatus(typeBtn);
+		if (mLatLng == null) {
+			isNetWorkConnected = false;
+			return;
+		}
 		askInterestData(typeBtn);
 	}
 
@@ -285,17 +311,22 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 
 		@Override
 		public void onReceiveLocation(BDLocation location) {
-			// 获取经纬度
-			if (mDialog != null && mDialog.isShowing()) {
-				mDialog.dismiss();
-			}
+			// 销毁等待对话框
+			dismissDialog();
+
 			if (location == null) {
-				Toast.makeText(mContext, " 无法获取位置信息，请检查网络！ ", Toast.LENGTH_LONG)
-						.show();
+				showReloadLayoutVisible();
+				isNetWorkConnected = false;
 				return;
 			}
+			if (isFirst) {
+				askInterestData(DELICACTBTN);
+				isFirst = false;
+			}
+			// 获取经纬度
 			mLatLng = new LatLng(location.getLatitude(),
 					location.getLongitude());
+			isNetWorkConnected = true;
 		}
 	}
 
@@ -311,9 +342,19 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 		case R.id.nearbyHotelBtn:
 			setClickBtn(HOTELBTN);
 			break;
+		case R.id.nearbyReload:
+			showProgessBarVisible();
+			setClickBtn(mCurrentBtnClick);
+			break;
 
 		default:
 			break;
+		}
+	}
+
+	private void dismissDialog() {
+		if (mDialog != null && mDialog.isShowing()) {
+			mDialog.dismiss();
 		}
 	}
 
