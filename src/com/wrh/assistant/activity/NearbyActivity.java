@@ -54,7 +54,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private static final String[] LEISURE = { "[休闲]", "网吧", "KTV", "洗浴" };
 	private ProgressDialog mDialog;
 	private int mCurrentBtnClick;
-	private static final int ALLBTN = 1;
+//	private static final int ALLBTN = 1;
 	private static final int DELICACTBTN = 2;
 	private static final int ENTERTAINMENTBTN = 3;
 	private static final int HOTELBTN = 4;
@@ -64,9 +64,9 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_nearby);
 		mContext = this;
-		initViews();
 		initLocation();
 		initPoiSearch();
+		initViews();
 
 	}
 
@@ -103,7 +103,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	}
 
 	private void initViews() {
-		mAllBtn = (TextView) findViewById(R.id.nearbyAllBtn);
+//		mAllBtn = (TextView) findViewById(R.id.nearbyAllBtn);
 		mHotelBtn = (TextView) findViewById(R.id.nearbyHotelBtn);
 		mDelicacyBtn = (TextView) findViewById(R.id.nearbyDelicacyBtn);
 		mInterestList = (ListView) findViewById(R.id.neabyInterestList);
@@ -123,12 +123,45 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 		mInterestList.setVisibility(View.INVISIBLE);
 		mUpdateProgressBar.setVisibility(View.VISIBLE);
 
-		setClickBtn(ALLBTN);
-		// mAllBtn.setTextColor(getResources().getColor(R.color.dark_blue));
+		setClickBtn(DELICACTBTN);
 	}
 
 	private void setClickBtn(int typeBtn) {
 		showBtnStatus(typeBtn);
+		askInterestData(typeBtn);
+	}
+
+	private void askInterestData(int typeBtn) {
+		PoiNearbySearchOption option;
+		switch (typeBtn) {
+		case DELICACTBTN:
+			option = new PoiNearbySearchOption();
+			option.location(mLatLng);
+			option.keyword("美食");
+			option.pageNum(10);
+			option.radius(5000);
+			mPoiSearch.searchNearby(option);
+			break;
+		case ENTERTAINMENTBTN:
+			option = new PoiNearbySearchOption();
+			option.location(mLatLng);
+			option.keyword("休闲娱乐");
+			option.pageNum(10);
+			option.radius(5000);
+			mPoiSearch.searchNearby(option);
+			break;
+		case HOTELBTN:
+			option = new PoiNearbySearchOption();
+			option.location(mLatLng);
+			option.keyword("酒店");
+			option.pageNum(10);
+			option.radius(5000);
+			mPoiSearch.searchNearby(option);
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	// 清除状态
@@ -137,9 +170,6 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 			return;
 		}
 		switch (mCurrentBtnClick) {
-		case ALLBTN:
-			mAllBtn.setTextColor(getResources().getColor(R.color.black));
-			break;
 		case DELICACTBTN:
 			mDelicacyBtn.setTextColor(getResources().getColor(R.color.black));
 			break;
@@ -160,10 +190,6 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private void showBtnStatus(int typeBtn) {
 		clearBtnStatus(typeBtn);
 		switch (typeBtn) {
-		case ALLBTN:
-			mAllBtn.setTextColor(getResources().getColor(R.color.dark_blue));
-			mCurrentBtnClick = ALLBTN;
-			break;
 		case DELICACTBTN:
 			clearBtnStatus(typeBtn);
 			mDelicacyBtn.setTextColor(getResources()
@@ -276,9 +302,6 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
-		case R.id.nearbyAllBtn:
-			setClickBtn(ALLBTN);
-			break;
 		case R.id.nearbyDelicacyBtn:
 			setClickBtn(DELICACTBTN);
 			break;
