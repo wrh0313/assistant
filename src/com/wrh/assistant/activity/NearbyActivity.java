@@ -1,7 +1,6 @@
 package com.wrh.assistant.activity;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
@@ -9,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +29,12 @@ import com.wrh.assistant.view.NearbyQCheckItem;
 import com.wrh.assistant.view.NearbyQCheckItem.OnClickItemListener;
 
 public class NearbyActivity extends Activity implements OnClickItemListener {
+
+	private TextView mAllBtn;
+	private TextView mHotelBtn;
+	private TextView mDelicacyBtn;
+	private TextView mEntertainmentBtn;
+	private ListView mInterestList;
 	private PoiSearch mPoiSearch;
 	private LinearLayout mNearbyQCheck;
 	private LocationClient mLocationClient;
@@ -86,6 +92,10 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 
 	private void initViews() {
 		mNearbyQCheck = (LinearLayout) findViewById(R.id.nearbyQuickCheck);
+		mAllBtn = (TextView) findViewById(R.id.nearbyAllBtn);
+		mHotelBtn = (TextView) findViewById(R.id.nearbyHotelBtn);
+		mDelicacyBtn = (TextView) findViewById(R.id.nearbyDelicacyBtn);
+		mEntertainmentBtn = (TextView) findViewById(R.id.nearbyEntertainmentBtn);
 
 		addNearbyQCheckItem(GOOUT);
 		addNearbyQCheckItem(LIFE);
@@ -153,7 +163,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 					Log.i("wrh", poiInfo.name);
 					Log.i("wrh", poiInfo.address);
 					Log.i("wrh", "" + poiInfo.type);
-					Log.i("wrh", result.getAllPoi().size()+"");
+					Log.i("wrh", result.getAllPoi().size() + "");
 				}
 			}
 		}
