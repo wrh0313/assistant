@@ -118,11 +118,6 @@ public class NearbyActivity extends Activity implements OnClickItemListener {
 			option.pageNum(10);
 			option.radius(3000);
 			mPoiSearch.searchNearby(option);
-			// PoiCitySearchOption option = new PoiCitySearchOption();
-			// option.city("梅州");
-			// option.keyword(GOOUT[1]);
-			// option.pageNum(10);
-			// mPoiSearch.searchInCity(option);
 		}
 	}
 
