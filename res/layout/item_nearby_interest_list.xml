@@ -2,7 +2,68 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginBottom="5dp"
+    android:layout_marginTop="5dp"
+    android:background="@android:color/white"
     android:orientation="vertical" >
-    
+
+    <TextView
+        android:id="@+id/itemInterestName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"
+        android:paddingLeft="10dp"
+        android:text="沙县小吃"
+        android:textColor="@color/black"
+        android:textSize="18sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="地址："
+            android:textColor="@color/dark_gray"
+            android:textSize=" 15sp" />
+
+        <TextView
+            android:id="@+id/itemInterestAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="大学城南亭村"
+            android:textColor="@color/dark_gray"
+            android:textSize=" 15sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:paddingLeft="10dp" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="电话："
+            android:textColor="@color/dark_gray"
+            android:textSize=" 15sp" />
+
+        <TextView
+            android:id="@+id/itemInterestTel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0201839556"
+            android:textColor="@color/dark_gray"
+            android:textSize=" 15sp" />
+    </LinearLayout>
 
 </LinearLayout>

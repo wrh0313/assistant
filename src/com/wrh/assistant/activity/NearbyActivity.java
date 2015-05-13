@@ -1,6 +1,8 @@
 package com.wrh.assistant.activity;
 
-import android.R.bool;
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -27,10 +29,13 @@ import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.core.SearchResult.ERRORNO;
 import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
 import com.baidu.mapapi.search.poi.PoiDetailResult;
+import com.baidu.mapapi.search.poi.PoiDetailSearchOption;
 import com.baidu.mapapi.search.poi.PoiNearbySearchOption;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
+import com.baidu.navisdk.util.common.NetworkUtils;
 import com.wrh.assistant.R;
+import com.wrh.assistant.utils.NetWorkUtil;
 import com.wrh.assistant.view.NearbyQCheckItem;
 import com.wrh.assistant.view.NearbyQCheckItem.OnClickItemListener;
 
@@ -56,12 +61,25 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private static final String[] LIFE = { "[生活]", "银行", "超市", "厕所" };
 	private static final String[] LEISURE = { "[休闲]", "网吧", "KTV", "洗浴" };
 	private ProgressDialog mDialog;
-	private boolean isNetWorkConnected;
 	private boolean isFirst = true;
+	private String mSearchKeyword;
 	private int mCurrentBtnClick;
 	private static final int DELICACTBTN = 1;
 	private static final int ENTERTAINMENTBTN = 2;
 	private static final int HOTELBTN = 3;
+
+	private static final String KEYWORD_BUSSTATION = "公交站";
+	private static final String KEYWORD_GASSTATION = "加油站";
+	private static final String KEYWORD_PARKING = "停车场";
+	private static final String KEYWORD_BANK = "银行";
+	private static final String KEYWORD_SUPERMARKET = "超市";
+	private static final String KEYWORD_WC = "厕所";
+	private static final String KEYWORD_INTERNETBAR = "网吧";
+	private static final String KEYWORD_KTV = "KTV";
+	private static final String KEYWORD_BATH = "洗浴";
+	private static final String KEYWORD_DELICACT = "美食";
+	private static final String KEYWORD_ENTERTAINMENT = "休闲娱乐";
+	private static final String KEYWORD_HOTEL = "酒店";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -125,8 +143,15 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 		mDelicacyBtn.setOnClickListener(this);
 		mEntertainmentBtn.setOnClickListener(this);
 
+		mAdapter = new InterestListAdapter(new ArrayList<PoiInfo>());
+		mInterestList.setAdapter(mAdapter);
+
 		showProgessBarVisible();
-		setClickBtn(DELICACTBTN);
+		showBtnStatus(DELICACTBTN);
+		if (!NetworkUtils.isNetworkAvailable(mContext)) {
+			showReloadLayoutVisible();
+		}
+		// setClickBtn(DELICACTBTN);
 	}
 
 	private void showProgessBarVisible() {
@@ -150,8 +175,8 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 
 	private void setClickBtn(int typeBtn) {
 		showBtnStatus(typeBtn);
-		if (mLatLng == null) {
-			isNetWorkConnected = false;
+		if (NetworkUtils.isNetworkAvailable(mContext) == false) {
+			showReloadLayoutVisible();
 			return;
 		}
 		askInterestData(typeBtn);
@@ -166,6 +191,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 			option.keyword("美食");
 			option.pageNum(10);
 			option.radius(5000);
+			mSearchKeyword = KEYWORD_DELICACT;
 			mPoiSearch.searchNearby(option);
 			break;
 		case ENTERTAINMENTBTN:
@@ -174,6 +200,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 			option.keyword("休闲娱乐");
 			option.pageNum(10);
 			option.radius(5000);
+			mSearchKeyword = KEYWORD_ENTERTAINMENT;
 			mPoiSearch.searchNearby(option);
 			break;
 		case HOTELBTN:
@@ -182,6 +209,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 			option.keyword("酒店");
 			option.pageNum(10);
 			option.radius(5000);
+			mSearchKeyword = KEYWORD_HOTEL;
 			mPoiSearch.searchNearby(option);
 			break;
 
@@ -287,7 +315,9 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 
 		@Override
 		public void onGetPoiDetailResult(PoiDetailResult result) {
-			// Log.i("wrh", "datail: " + result.toString());
+			Log.i("hrw", "detail url: " + result.getDetailUrl());
+			Log.i("hrw", "detail name:" + result.getName());
+			Log.i("hrw", "detail uid:" + result.getUid());
 		}
 
 		@Override
@@ -296,15 +326,16 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 					Toast.LENGTH_LONG).show();
 			Log.i("wrh", "result: " + result.error);
 			if (result != null && result.error == ERRORNO.NO_ERROR) {
-				for (PoiInfo poiInfo : result.getAllPoi()) {
-					Log.i("wrh", poiInfo.name);
-					Log.i("wrh", poiInfo.address);
-					Log.i("wrh", "" + poiInfo.type);
-					Log.i("wrh", result.getAllPoi().size() + "");
+
+				if (mSearchKeyword == KEYWORD_DELICACT
+						|| mSearchKeyword == KEYWORD_ENTERTAINMENT
+						|| mSearchKeyword == KEYWORD_HOTEL) {
+					mInterestList.smoothScrollToPosition(0);
+					showInterestListVisible();
+					mAdapter.addDatas(result.getAllPoi());
 				}
 			}
 		}
-
 	}
 
 	public class MyLocationListener implements BDLocationListener {
@@ -316,17 +347,18 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 
 			if (location == null) {
 				showReloadLayoutVisible();
-				isNetWorkConnected = false;
 				return;
 			}
-			if (isFirst) {
-				askInterestData(DELICACTBTN);
-				isFirst = false;
-			}
+
 			// 获取经纬度
 			mLatLng = new LatLng(location.getLatitude(),
 					location.getLongitude());
-			isNetWorkConnected = true;
+
+			if (isFirst) {
+				setClickBtn(DELICACTBTN);
+				isFirst = false;
+			}
+
 		}
 	}
 
@@ -334,15 +366,20 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.nearbyDelicacyBtn:
+			showProgessBarVisible();
 			setClickBtn(DELICACTBTN);
 			break;
 		case R.id.nearbyEntertainmentBtn:
+			showProgessBarVisible();
 			setClickBtn(ENTERTAINMENTBTN);
 			break;
 		case R.id.nearbyHotelBtn:
+			showProgessBarVisible();
 			setClickBtn(HOTELBTN);
 			break;
 		case R.id.nearbyReload:
+			mLocationClient.start();
+			GetLocationDialog();
 			showProgessBarVisible();
 			setClickBtn(mCurrentBtnClick);
 			break;
@@ -359,25 +396,62 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	}
 
 	public class InterestListAdapter extends BaseAdapter {
+		private List<PoiInfo> datas;
 
-		@Override
-		public int getCount() {
-			return 0;
+		public InterestListAdapter(List<PoiInfo> datas) {
+			this.datas = datas;
+		}
+
+		public void addDatas(List<PoiInfo> datas) {
+			if (this.datas != null) {
+				this.datas.clear();
+				this.datas.addAll(datas);
+				notifyDataSetChanged();
+			}
 		}
 
 		@Override
-		public Object getItem(int position) {
-			return null;
+		public int getCount() {
+			return datas.size();
+		}
+
+		@Override
+		public PoiInfo getItem(int position) {
+			return datas.get(position);
 		}
 
 		@Override
 		public long getItemId(int position) {
-			return 0;
+			return position;
 		}
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-			return null;
+			ViewHolder holder;
+			if (convertView == null) {
+				holder = new ViewHolder();
+				convertView = getLayoutInflater().inflate(
+						R.layout.item_nearby_interest_list, null);
+				holder.name = (TextView) convertView
+						.findViewById(R.id.itemInterestName);
+				holder.addr = (TextView) convertView
+						.findViewById(R.id.itemInterestAddress);
+				holder.tel = (TextView) convertView
+						.findViewById(R.id.itemInterestTel);
+				convertView.setTag(holder);
+			} else {
+				holder = (ViewHolder) convertView.getTag();
+			}
+			holder.name.setText(getItem(position).name);
+			holder.addr.setText(getItem(position).address);
+			holder.tel.setText(getItem(position).phoneNum);
+			return convertView;
+		}
+
+		class ViewHolder {
+			private TextView name;
+			private TextView addr;
+			private TextView tel;
 		}
 
 	}
