@@ -21,7 +21,9 @@ import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BaiduMap.OnMapStatusChangeListener;
+import com.baidu.mapapi.map.BaiduMap.OnMyLocationClickListener;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
@@ -33,10 +35,12 @@ import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.overlayutil.DrivingRouteOverlay;
 import com.baidu.mapapi.overlayutil.WalkingRouteOverlay;
+import com.baidu.mapapi.search.poi.PoiResult;
 import com.wrh.assistant.R;
 import com.wrh.assistant.listener.MyOrientationListener;
 import com.wrh.assistant.listener.MyOrientationListener.OnOrientationListener;
 import com.wrh.assistant.model.DrivingResult;
+import com.wrh.assistant.model.PoiSearchResult;
 import com.wrh.assistant.model.WalkingResult;
 import com.wrh.assistant.view.ZoomControlView;
 
@@ -48,6 +52,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	private ZoomControlView mZoomControlView = null;
 	private Button mNearbyBtn = null;
 	private Button mRouteBtn = null;
+	private Button mButton;
+	private InfoWindow mInfoWindow;
+	private LatLng mLatLng;
 	// 定位客户端
 	private LocationClient mMyLocationClient;
 	// 定位监听器
@@ -92,6 +99,8 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initViews() {
+		mButton = new Button(getApplicationContext());
+		mButton.setBackgroundResource(R.drawable.expandable_poi_btn);
 		// 初始化地图控件
 		mMapView = (MapView) findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();
@@ -113,7 +122,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public void onMapStatusChange(MapStatus arg0) {
-				
+
 			}
 		});
 		// 初始化周边按钮控件
@@ -132,6 +141,15 @@ public class MainActivity extends Activity implements OnClickListener {
 		// 设置缩放比例
 		msu = MapStatusUpdateFactory.zoomTo(15.0f);
 		mBaiduMap.setMapStatus(msu);
+
+		mBaiduMap.setOnMyLocationClickListener(new OnMyLocationClickListener() {
+
+			@Override
+			public boolean onMyLocationClick() {
+				mBaiduMap.showInfoWindow(mInfoWindow);
+				return true;
+			}
+		});
 
 	}
 
@@ -169,6 +187,8 @@ public class MainActivity extends Activity implements OnClickListener {
 			DrivingRouteOverlay overlay = new DrivingRouteOverlay(mBaiduMap);
 			overlay.setData(DrivingResult.getDrivingRouteResult()
 					.getRouteLines().get(0));
+			overlay.addToMap();
+			overlay.zoomToSpan();
 			for (OverlayOptions options : overlay.getOverlayOptions()) {
 				mBaiduMap.addOverlay(options);
 			}
@@ -177,10 +197,14 @@ public class MainActivity extends Activity implements OnClickListener {
 			WalkingRouteOverlay overlay = new WalkingRouteOverlay(mBaiduMap);
 			overlay.setData(WalkingResult.getWalkingRouteResult()
 					.getRouteLines().get(0));
+			overlay.addToMap();
+			overlay.zoomToSpan();
 			for (OverlayOptions options : overlay.getOverlayOptions()) {
 				mBaiduMap.addOverlay(options);
 			}
 
+		} else if (resultCode == NearbyActivity.RSP_CODE_POI_RESULT) {
+			PoiResult result = PoiSearchResult.getPoiResult();
 		}
 
 	}
@@ -215,6 +239,11 @@ public class MainActivity extends Activity implements OnClickListener {
 					BitmapDescriptorFactory.fromResource(ID_ICON_FOLLOW));
 			mBaiduMap.setMyLocationConfigeration(locationConfiguration);
 
+			mLatLng = new LatLng(location.getLatitude(),
+					location.getLongitude());
+			mButton.setText(" " + location.getAddrStr() + " ");
+			mInfoWindow = new InfoWindow(mButton, mLatLng, -47);
+
 			if (isFristLocation) {
 				Toast.makeText(
 						mContext,
@@ -222,13 +251,11 @@ public class MainActivity extends Activity implements OnClickListener {
 								+ location.getStreetNumber(),
 						Toast.LENGTH_SHORT).show();
 
-				LatLng latLng = new LatLng(location.getLatitude(),
-						location.getLongitude());
-				MapStatusUpdate msu = MapStatusUpdateFactory.newLatLng(latLng);
+				MapStatusUpdate msu = MapStatusUpdateFactory.newLatLng(mLatLng);
 				mBaiduMap.animateMapStatus(msu);
 				isFristLocation = false;
 				// 将经纬度保存到SharedPreferences中
-				saveLatlng(latLng);
+				saveLatlng(mLatLng);
 
 				// Toast.makeText(mContext, location.getAddrStr(),
 				// Toast.LENGTH_SHORT).show();
@@ -315,7 +342,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		case R.id.nearbyBtn:
 			mBaiduMap.clear();
 			i = new Intent(this, NearbyActivity.class);
-			startActivity(i);
+			startActivityForResult(i, 0);
 			break;
 		case R.id.routeBtn:
 			mBaiduMap.clear();

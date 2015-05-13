@@ -95,6 +95,14 @@ public class RouteActivity extends Activity implements OnClickListener {
 		setTMode(MODE_BUS);
 	}
 
+	@Override
+	public void onBackPressed() {
+		if (mDialog != null && mDialog.isShowing()) {
+			mDialog.dismiss();
+		}
+		super.onBackPressed();
+	}
+
 	// 初始化定位
 	private void initLocation() {
 		mLocationClient = new LocationClient(this);

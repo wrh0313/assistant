@@ -35,6 +35,7 @@ import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
 import com.baidu.navisdk.util.common.NetworkUtils;
 import com.wrh.assistant.R;
+import com.wrh.assistant.model.PoiSearchResult;
 import com.wrh.assistant.utils.NetWorkUtil;
 import com.wrh.assistant.view.NearbyQCheckItem;
 import com.wrh.assistant.view.NearbyQCheckItem.OnClickItemListener;
@@ -68,18 +69,11 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private static final int ENTERTAINMENTBTN = 2;
 	private static final int HOTELBTN = 3;
 
-	private static final String KEYWORD_BUSSTATION = "公交站";
-	private static final String KEYWORD_GASSTATION = "加油站";
-	private static final String KEYWORD_PARKING = "停车场";
-	private static final String KEYWORD_BANK = "银行";
-	private static final String KEYWORD_SUPERMARKET = "超市";
-	private static final String KEYWORD_WC = "厕所";
-	private static final String KEYWORD_INTERNETBAR = "网吧";
-	private static final String KEYWORD_KTV = "KTV";
-	private static final String KEYWORD_BATH = "洗浴";
 	private static final String KEYWORD_DELICACT = "美食";
 	private static final String KEYWORD_ENTERTAINMENT = "休闲娱乐";
 	private static final String KEYWORD_HOTEL = "酒店";
+
+	public static final int RSP_CODE_POI_RESULT = 5;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -326,14 +320,22 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 					Toast.LENGTH_LONG).show();
 			Log.i("wrh", "result: " + result.error);
 			if (result != null && result.error == ERRORNO.NO_ERROR) {
-
 				if (mSearchKeyword == KEYWORD_DELICACT
 						|| mSearchKeyword == KEYWORD_ENTERTAINMENT
 						|| mSearchKeyword == KEYWORD_HOTEL) {
+					mSearchKeyword = "";
 					mInterestList.smoothScrollToPosition(0);
 					showInterestListVisible();
 					mAdapter.addDatas(result.getAllPoi());
+				} else {
+					PoiSearchResult.setPoiResult(result);
+					setResult(RSP_CODE_POI_RESULT);
+					finish();
 				}
+
+			} else {
+				Toast.makeText(mContext, " 亲，没有找到poi信息  ", Toast.LENGTH_SHORT)
+						.show();
 			}
 		}
 	}
