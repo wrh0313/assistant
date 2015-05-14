@@ -58,8 +58,8 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private LocationClient mLocationClient;
 	private MyLocationListener mLocationListener;
 	private OnGetPoiResult mOnGetPoiResultListener;
-	private static final String[] GOOUT = { "[出行]", "公交站", "加油站", "停车场" };
-	private static final String[] LIFE = { "[生活]", "银行", "超市", "厕所" };
+	private static final String[] GOOUT   = { "[出行]", "公交站", "加油站", "停车场" };
+	private static final String[] LIFE    = { "[生活]", "银行", "超市", "厕所" };
 	private static final String[] LEISURE = { "[休闲]", "网吧", "KTV", "洗浴" };
 	private ProgressDialog mDialog;
 	private boolean isFirst = true;

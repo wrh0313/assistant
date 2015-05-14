@@ -20,10 +20,12 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BaiduMap.OnMapClickListener;
 import com.baidu.mapapi.map.BaiduMap.OnMapStatusChangeListener;
 import com.baidu.mapapi.map.BaiduMap.OnMyLocationClickListener;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.InfoWindow;
+import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
@@ -34,7 +36,10 @@ import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.overlayutil.DrivingRouteOverlay;
+import com.baidu.mapapi.overlayutil.PoiOverlay;
 import com.baidu.mapapi.overlayutil.WalkingRouteOverlay;
+import com.baidu.mapapi.search.core.PoiInfo;
+import com.baidu.mapapi.search.core.PoiInfo.POITYPE;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.wrh.assistant.R;
 import com.wrh.assistant.listener.MyOrientationListener;
@@ -53,6 +58,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	private Button mNearbyBtn = null;
 	private Button mRouteBtn = null;
 	private Button mButton;
+	private boolean mWindowShow;
 	private InfoWindow mInfoWindow;
 	private LatLng mLatLng;
 	// 定位客户端
@@ -99,8 +105,10 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initViews() {
+		// 初始化我的位置弹出按钮
 		mButton = new Button(getApplicationContext());
-		mButton.setBackgroundResource(R.drawable.expandable_poi_btn);
+		mButton.setTextColor(getResources().getColor(R.color.black));
+		mButton.setBackgroundResource(R.drawable.layout_shadow);
 		// 初始化地图控件
 		mMapView = (MapView) findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();
@@ -146,8 +154,31 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public boolean onMyLocationClick() {
-				mBaiduMap.showInfoWindow(mInfoWindow);
+				if (!mWindowShow) {
+					mBaiduMap.showInfoWindow(mInfoWindow);
+					mWindowShow = true;
+				} else {
+					mBaiduMap.hideInfoWindow();
+					mWindowShow = false;
+				}
+
 				return true;
+			}
+		});
+
+		mBaiduMap.setOnMapClickListener(new OnMapClickListener() {
+
+			@Override
+			public boolean onMapPoiClick(MapPoi mapPoi) {
+				return false;
+			}
+
+			@Override
+			public void onMapClick(LatLng latLng) {
+				if (mWindowShow) {
+					mBaiduMap.hideInfoWindow();
+					mWindowShow = false;
+				}
 			}
 		});
 
@@ -205,6 +236,12 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		} else if (resultCode == NearbyActivity.RSP_CODE_POI_RESULT) {
 			PoiResult result = PoiSearchResult.getPoiResult();
+			mBaiduMap.clear();
+			PoiOverlay poiOverlay = new MyPoiOverlay(mBaiduMap);
+			mBaiduMap.setOnMarkerClickListener(poiOverlay);
+			poiOverlay.setData(result);
+			poiOverlay.addToMap();
+			poiOverlay.zoomToSpan();
 		}
 
 	}
@@ -238,7 +275,7 @@ public class MainActivity extends Activity implements OnClickListener {
 					mCurrentLocationMode, true,
 					BitmapDescriptorFactory.fromResource(ID_ICON_FOLLOW));
 			mBaiduMap.setMyLocationConfigeration(locationConfiguration);
-
+			// 我的位置弹出窗覆盖物
 			mLatLng = new LatLng(location.getLatitude(),
 					location.getLongitude());
 			mButton.setText(" " + location.getAddrStr() + " ");
@@ -352,6 +389,41 @@ public class MainActivity extends Activity implements OnClickListener {
 		default:
 			break;
 		}
+	}
+
+	public class MyPoiOverlay extends PoiOverlay {
+		PoiInfo info;
+		InfoWindow infoWindow;
+		Button button;
+
+		public MyPoiOverlay(BaiduMap baiduMap) {
+			super(baiduMap);
+			button = new Button(getApplicationContext());
+			button.setBackgroundResource(R.drawable.layout_shadow);
+			button.setTextColor(getResources().getColor(R.color.black));
+		}
+
+		@Override
+		public boolean onPoiClick(int index) {
+			info = getPoiResult().getAllPoi().get(index);
+			infoWindow = new InfoWindow(button, info.location, -47);
+
+			if (mWindowShow) {
+				mBaiduMap.hideInfoWindow();
+				mWindowShow = false;
+			} else {
+				if (info.type == POITYPE.BUS_STATION) {
+					button.setText(info.name + " (公交站)");
+				} else {
+					button.setText(info.name);
+				}
+
+				mBaiduMap.showInfoWindow(infoWindow);
+				mWindowShow = true;
+			}
+			return super.onPoiClick(index);
+		}
+
 	}
 
 }
