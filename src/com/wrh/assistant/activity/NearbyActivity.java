@@ -13,6 +13,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
@@ -46,6 +47,7 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private Context mContext;
 	private Button mReloadBtn;
 	private TextView mHotelBtn;
+	private ImageView mBackUp;
 	private PoiSearch mPoiSearch;
 	private TextView mDelicacyBtn;
 	private LatLng mLatLng = null;
@@ -58,8 +60,8 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 	private LocationClient mLocationClient;
 	private MyLocationListener mLocationListener;
 	private OnGetPoiResult mOnGetPoiResultListener;
-	private static final String[] GOOUT   = { "[出行]", "公交站", "加油站", "停车场" };
-	private static final String[] LIFE    = { "[生活]", "银行", "超市", "厕所" };
+	private static final String[] GOOUT = { "[出行]", "公交站", "加油站", "停车场" };
+	private static final String[] LIFE = { "[生活]", "银行", "超市", "厕所" };
 	private static final String[] LEISURE = { "[休闲]", "网吧", "KTV", "洗浴" };
 	private ProgressDialog mDialog;
 	private boolean isFirst = true;
@@ -127,11 +129,13 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 		mUpdateProgressBar = (ProgressBar) findViewById(R.id.nearbyUpdateProgress);
 		mReloadLayout = (LinearLayout) findViewById(R.id.nearbyReloadLayout);
 		mReloadBtn = (Button) findViewById(R.id.nearbyReload);
+		mBackUp = (ImageView) findViewById(R.id.nearbyBackUp);
 
 		addNearbyQCheckItem(GOOUT);
 		addNearbyQCheckItem(LIFE);
 		addNearbyQCheckItem(LEISURE);
 
+		mBackUp.setOnClickListener(this);
 		mHotelBtn.setOnClickListener(this);
 		mReloadBtn.setOnClickListener(this);
 		mDelicacyBtn.setOnClickListener(this);
@@ -384,6 +388,9 @@ public class NearbyActivity extends Activity implements OnClickItemListener,
 			GetLocationDialog();
 			showProgessBarVisible();
 			setClickBtn(mCurrentBtnClick);
+			break;
+		case R.id.nearbyBackUp:
+			finish();
 			break;
 
 		default:

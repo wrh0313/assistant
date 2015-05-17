@@ -13,10 +13,10 @@
         android:layout_weight="1"
         android:paddingBottom="7dp"
         android:paddingTop="7dp" >
-
+		
         <Button
             android:id="@+id/nearbyBtn"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:background="@drawable/main_indication_bar_btn_seletor"
@@ -36,7 +36,7 @@
 
         <Button
             android:id="@+id/routeBtn"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:background="@drawable/main_indication_bar_btn_seletor"
@@ -54,8 +54,8 @@
         android:paddingTop="7dp" >
 
         <Button
-            android:id="@+id/moreBtn"
-            android:layout_width="wrap_content"
+            android:id="@+id/shareBtn"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:background="@drawable/main_indication_bar_btn_seletor"

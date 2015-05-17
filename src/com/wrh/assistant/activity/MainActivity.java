@@ -6,12 +6,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.PopupWindow;
+import android.widget.PopupWindow.OnDismissListener;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
@@ -49,7 +63,8 @@ import com.wrh.assistant.model.PoiSearchResult;
 import com.wrh.assistant.model.WalkingResult;
 import com.wrh.assistant.view.ZoomControlView;
 
-public class MainActivity extends Activity implements OnClickListener {
+public class MainActivity extends Activity implements OnClickListener,
+		OnItemClickListener {
 
 	private Context mContext = null;
 	private MapView mMapView = null;
@@ -57,10 +72,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	private ZoomControlView mZoomControlView = null;
 	private Button mNearbyBtn = null;
 	private Button mRouteBtn = null;
+	private Button mShareBtn = null;
 	private Button mButton;
 	private boolean mWindowShow;
 	private InfoWindow mInfoWindow;
 	private LatLng mLatLng;
+	private View sharePopuView;
 	// 定位客户端
 	private LocationClient mMyLocationClient;
 	// 定位监听器
@@ -80,6 +97,10 @@ public class MainActivity extends Activity implements OnClickListener {
 	private static final String KEY_LAT = "lat";
 	private static final String KEY_LNG = "lng";
 	private BroadcastReceiver mReceiver;
+	private static final String[] SHARETEXT = { "微信好友", "微信朋友圈", "新浪微博", "QQ空间" };
+	private static final int[] SHAREIMG = { R.drawable.sns_weixin_icon,
+			R.drawable.sns_weixin_timeline_icon, R.drawable.sns_sina_icon,
+			R.drawable.sns_qzone_icon };
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +114,16 @@ public class MainActivity extends Activity implements OnClickListener {
 		initBroadcastReceiver();
 		initViews();
 		initLocation();
+		initPopuView();
+	}
+
+	private void initPopuView() {
+		sharePopuView = getLayoutInflater().inflate(R.layout.share_popu, null);
+		GridView shareGridView = (GridView) sharePopuView
+				.findViewById(R.id.shareGridView);
+		ShareAdapter adapter = new ShareAdapter();
+		shareGridView.setAdapter(adapter);
+		shareGridView.setOnItemClickListener(this);
 	}
 
 	private void initBroadcastReceiver() {
@@ -139,6 +170,9 @@ public class MainActivity extends Activity implements OnClickListener {
 		// 初始化路线查询按钮控件
 		mRouteBtn = (Button) findViewById(R.id.routeBtn);
 		mRouteBtn.setOnClickListener(this);
+		//初始化分享按钮空间
+		mShareBtn = (Button) findViewById(R.id.shareBtn);
+		mShareBtn.setOnClickListener(this);
 		// 获取上一次保存的经纬度
 		MapStatusUpdate msu = null;
 		LatLng latLng = getLatlng();
@@ -386,9 +420,74 @@ public class MainActivity extends Activity implements OnClickListener {
 			i = new Intent(this, RouteActivity.class);
 			startActivityForResult(i, 0);
 			break;
+		case R.id.shareBtn:
+			PopupWindow popupWindow = new PopupWindow(sharePopuView,
+					LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			popupWindow.setFocusable(true);
+			popupWindow.setOutsideTouchable(true);
+			popupWindow.setBackgroundDrawable(new BitmapDrawable());
+			popupWindow.showAtLocation(mShareBtn, Gravity.CENTER, 0, 0);
+			//设置透明度
+			final Window window=getWindow();
+	        final WindowManager.LayoutParams wl = window.getAttributes();
+	        wl.alpha=0.5f;
+	        window.setAttributes(wl);
+	        popupWindow.setOnDismissListener(new OnDismissListener() {
+				
+				@Override
+				public void onDismiss() {
+					wl.alpha = 1.0f;
+					window.setAttributes(wl);
+				}
+			});
+			
 		default:
 			break;
 		}
+	}
+
+	public class ShareAdapter extends BaseAdapter {
+
+		@Override
+		public int getCount() {
+			return SHAREIMG.length;
+		}
+
+		@Override
+		public Object getItem(int position) {
+			return null;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return position;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			ViewHolder holder;
+			if (convertView == null) {
+				convertView = getLayoutInflater().inflate(
+						R.layout.item_share_popu, null);
+				holder = new ViewHolder();
+				holder.img = (ImageView) convertView
+						.findViewById(R.id.itemShareImg);
+				holder.txt = (TextView) convertView
+						.findViewById(R.id.itemShareText);
+				convertView.setTag(holder);
+			} else {
+				holder = (ViewHolder) convertView.getTag();
+			}
+			holder.img.setImageResource(SHAREIMG[position]);
+			holder.txt.setText(SHARETEXT[position]);
+			return convertView;
+		}
+
+		class ViewHolder {
+			private ImageView img;
+			private TextView txt;
+		}
+
 	}
 
 	public class MyPoiOverlay extends PoiOverlay {
@@ -424,6 +523,13 @@ public class MainActivity extends Activity implements OnClickListener {
 			return super.onPoiClick(index);
 		}
 
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		Toast.makeText(mContext, position + " item click", Toast.LENGTH_SHORT)
+				.show();
 	}
 
 }
