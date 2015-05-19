@@ -723,8 +723,10 @@ public class MainActivity extends Activity implements OnClickListener,
 			break;
 
 		case WBConstants.ErrorCode.ERR_FAIL:
-			Toast.makeText(this, "分享失败 " + "Error message:" + arg0.errMsg,
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(
+					this,
+					"分享失败 " + "Error message: " + arg0.errCode + " "
+							+ arg0.errMsg, Toast.LENGTH_LONG).show();
 			break;
 
 		default:
