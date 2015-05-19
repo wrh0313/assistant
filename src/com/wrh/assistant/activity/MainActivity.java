@@ -1,13 +1,21 @@
 package com.wrh.assistant.activity;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -28,6 +36,7 @@ import android.widget.PopupWindow.OnDismissListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.android.bbalbs.common.a.b;
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -37,6 +46,7 @@ import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BaiduMap.OnMapClickListener;
 import com.baidu.mapapi.map.BaiduMap.OnMapStatusChangeListener;
 import com.baidu.mapapi.map.BaiduMap.OnMyLocationClickListener;
+import com.baidu.mapapi.map.BaiduMap.SnapshotReadyCallback;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapPoi;
@@ -55,16 +65,23 @@ import com.baidu.mapapi.overlayutil.WalkingRouteOverlay;
 import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.core.PoiInfo.POITYPE;
 import com.baidu.mapapi.search.poi.PoiResult;
+import com.sina.weibo.sdk.api.share.BaseResponse;
+import com.sina.weibo.sdk.api.share.IWeiboHandler;
+import com.sina.weibo.sdk.constant.WBConstants;
 import com.wrh.assistant.R;
 import com.wrh.assistant.listener.MyOrientationListener;
 import com.wrh.assistant.listener.MyOrientationListener.OnOrientationListener;
 import com.wrh.assistant.model.DrivingResult;
 import com.wrh.assistant.model.PoiSearchResult;
 import com.wrh.assistant.model.WalkingResult;
+import com.wrh.assistant.utils.ApkUtil;
+import com.wrh.assistant.utils.QQUtil;
+import com.wrh.assistant.utils.WeiXinUtil;
+import com.wrh.assistant.utils.WeiboUtil;
 import com.wrh.assistant.view.ZoomControlView;
 
 public class MainActivity extends Activity implements OnClickListener,
-		OnItemClickListener {
+		OnItemClickListener, IWeiboHandler.Response {
 
 	private Context mContext = null;
 	private MapView mMapView = null;
@@ -90,6 +107,12 @@ public class MainActivity extends Activity implements OnClickListener,
 	private MyOrientationListener mOrientationListener;
 	//
 	private float mCurrentOrientationX;
+	// 新浪微博分享工具类
+	private WeiboUtil mWeiboUtil;
+	// QQ分享工具类
+	private QQUtil mQQUtil;
+	// 微信分享工具类
+	private WeiXinUtil mWeiXinUtil;
 	// 自定义定位图层图片ID
 	private static final int ID_ICON_FOLLOW = R.drawable.main_icon_follow;
 	// 使用sharedPreferences保存上一次的经纬度
@@ -97,10 +120,22 @@ public class MainActivity extends Activity implements OnClickListener,
 	private static final String KEY_LAT = "lat";
 	private static final String KEY_LNG = "lng";
 	private BroadcastReceiver mReceiver;
+	private PopupWindow popupWindow;
+	private static final int SHARE_TO_WEIXIN = 0;
+	private static final int SHARE_TO_WEIXIN_TIMELINE = 1;
+	private static final int SHARE_TO_SINA = 2;
+	private static final int SHARE_TO_QZONE = 3;
 	private static final String[] SHARETEXT = { "微信好友", "微信朋友圈", "新浪微博", "QQ空间" };
 	private static final int[] SHAREIMG = { R.drawable.sns_weixin_icon,
 			R.drawable.sns_weixin_timeline_icon, R.drawable.sns_sina_icon,
 			R.drawable.sns_qzone_icon };
+	private static final String SINAWEIBO_SHARE_TEXT = "#来自新浪分享SDK#";
+	private static final String WEIXIN_SHARE_TEXT = "#来自微信分享SDK#";
+	private static final String QQZ_SHARE_TEXT = "#来自QQ空间分享SDK#";
+	private static final String APP_KEY_SINA = "2885278886";
+	private static final String APP_ID_WEIXIN = "wx773bb43ff9394261";
+	private static final String APP_ID_QQ = "1104566903";
+	private static final String FILE_NAME = "/com/wrh/assistant/bitmap.png";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -115,6 +150,17 @@ public class MainActivity extends Activity implements OnClickListener,
 		initViews();
 		initLocation();
 		initPopuView();
+		initShareUtil(savedInstanceState);
+	}
+
+	private void initShareUtil(Bundle savedInstanceState) {
+		mWeiboUtil = new WeiboUtil(this, APP_KEY_SINA);
+		if (savedInstanceState != null) {
+			mWeiboUtil.getApi().handleWeiboResponse(getIntent(), this);
+		}
+
+		mWeiXinUtil = new WeiXinUtil(mContext, APP_ID_WEIXIN);
+		mQQUtil = new QQUtil(mContext, APP_ID_QQ);
 	}
 
 	private void initPopuView() {
@@ -170,7 +216,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		// 初始化路线查询按钮控件
 		mRouteBtn = (Button) findViewById(R.id.routeBtn);
 		mRouteBtn.setOnClickListener(this);
-		//初始化分享按钮空间
+		// 初始化分享按钮空间
 		mShareBtn = (Button) findViewById(R.id.shareBtn);
 		mShareBtn.setOnClickListener(this);
 		// 获取上一次保存的经纬度
@@ -243,6 +289,12 @@ public class MainActivity extends Activity implements OnClickListener,
 					}
 				});
 
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		mWeiboUtil.getApi().handleWeiboResponse(intent, this);
 	}
 
 	@Override
@@ -421,26 +473,26 @@ public class MainActivity extends Activity implements OnClickListener,
 			startActivityForResult(i, 0);
 			break;
 		case R.id.shareBtn:
-			PopupWindow popupWindow = new PopupWindow(sharePopuView,
+			popupWindow = new PopupWindow(sharePopuView,
 					LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 			popupWindow.setFocusable(true);
 			popupWindow.setOutsideTouchable(true);
 			popupWindow.setBackgroundDrawable(new BitmapDrawable());
 			popupWindow.showAtLocation(mShareBtn, Gravity.CENTER, 0, 0);
-			//设置透明度
-			final Window window=getWindow();
-	        final WindowManager.LayoutParams wl = window.getAttributes();
-	        wl.alpha=0.5f;
-	        window.setAttributes(wl);
-	        popupWindow.setOnDismissListener(new OnDismissListener() {
-				
+			// 设置透明度
+			final Window window = getWindow();
+			final WindowManager.LayoutParams wl = window.getAttributes();
+			wl.alpha = 0.5f;
+			window.setAttributes(wl);
+			popupWindow.setOnDismissListener(new OnDismissListener() {
+
 				@Override
 				public void onDismiss() {
 					wl.alpha = 1.0f;
 					window.setAttributes(wl);
 				}
 			});
-			
+
 		default:
 			break;
 		}
@@ -528,8 +580,156 @@ public class MainActivity extends Activity implements OnClickListener,
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
-		Toast.makeText(mContext, position + " item click", Toast.LENGTH_SHORT)
-				.show();
+		switch (position) {
+		case SHARE_TO_WEIXIN:
+			shareTo(SHARE_TO_WEIXIN);
+			break;
+		case SHARE_TO_WEIXIN_TIMELINE:
+			shareTo(SHARE_TO_WEIXIN_TIMELINE);
+			break;
+		case SHARE_TO_SINA:
+			shareTo(SHARE_TO_SINA);
+			break;
+		case SHARE_TO_QZONE:
+			shareTo(SHARE_TO_QZONE);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	private void shareTo(final int which) {
+		mBaiduMap.snapshotScope(null, new SnapshotReadyCallback() {
+
+			@Override
+			public void onSnapshotReady(Bitmap bitmap) {
+				if (popupWindow.isShowing()) {
+					popupWindow.dismiss();
+				}
+				switch (which) {
+				case SHARE_TO_WEIXIN:
+					if (!ApkUtil.isApkInstalled(mContext,
+							WeiXinUtil.PACKAGENAME)) {
+						Toast.makeText(mContext, "请先安装微信", Toast.LENGTH_SHORT)
+								.show();
+						return;
+					}
+					if (!mWeiXinUtil.isRegisterSuccess()) {
+						Toast.makeText(mContext, "注册微信失败", Toast.LENGTH_SHORT)
+								.show();
+						return;
+					}
+					if (!mWeiXinUtil.sendImageReqToFriends("我的位置",
+							WEIXIN_SHARE_TEXT, bitmap)) {
+						Toast.makeText(mContext, "发送消息失败", Toast.LENGTH_SHORT)
+								.show();
+					}
+					break;
+				case SHARE_TO_WEIXIN_TIMELINE:
+					if (!ApkUtil.isApkInstalled(mContext,
+							WeiXinUtil.PACKAGENAME)) {
+						Toast.makeText(mContext, "请先安装微信", Toast.LENGTH_SHORT)
+								.show();
+						return;
+					}
+					if (!mWeiXinUtil.isRegisterSuccess()) {
+						Toast.makeText(mContext, "注册微信失败", Toast.LENGTH_SHORT)
+								.show();
+						return;
+					}
+					if (!mWeiXinUtil.sendImageReqToNetWoring("我的位置",
+							WEIXIN_SHARE_TEXT, bitmap)) {
+						Toast.makeText(mContext, "发送消息失败", Toast.LENGTH_SHORT)
+								.show();
+					}
+					break;
+				case SHARE_TO_SINA:
+					if (!ApkUtil
+							.isApkInstalled(mContext, WeiboUtil.PACKAGENAME)) {
+						Toast.makeText(mContext, "请先安装新浪微博", Toast.LENGTH_SHORT)
+								.show();
+						return;
+					}
+					if (!mWeiboUtil.isRegisterSuccess()) {
+						Toast.makeText(mContext, "注册新浪微博失败", Toast.LENGTH_SHORT)
+								.show();
+						break;
+					}
+					if (!mWeiboUtil.sendImageMessage(bitmap)) {
+						Toast.makeText(mContext, "发送消息失败", Toast.LENGTH_SHORT)
+								.show();
+					}
+					break;
+				case SHARE_TO_QZONE:
+					writeToSD(bitmap);
+					break;
+
+				default:
+					break;
+				}
+			}
+
+		});
+	}
+
+	private void writeToSD(Bitmap bm) {
+		if (Environment.MEDIA_MOUNTED.equals(Environment
+				.getExternalStorageState())
+				|| !Environment.isExternalStorageRemovable()) {
+			byte[] bytes = bitmapToBytes(bm);
+			try {
+				File file = new File(Environment.getExternalStorageDirectory()
+						.getPath() + FILE_NAME);
+				if (!file.exists()) {
+					file.mkdirs();
+				}
+				Log.i("wrh", "fileName:" + file.getPath());
+				FileOutputStream fos = new FileOutputStream(file);
+				fos.write(bytes);
+				fos.flush();
+				fos.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+
+		}
+
+	}
+
+	private byte[] bitmapToBytes(Bitmap bm) {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		bm.compress(Bitmap.CompressFormat.PNG, 100, baos);
+		return baos.toByteArray();
+
+	}
+
+	/**
+	 * 新浪微博回调
+	 */
+	@Override
+	public void onResponse(BaseResponse arg0) {
+		// TODO Auto-generated method stub
+		switch (arg0.errCode) {
+		case WBConstants.ErrorCode.ERR_OK:
+			Toast.makeText(this, "分享成功", Toast.LENGTH_LONG).show();
+			break;
+
+		case WBConstants.ErrorCode.ERR_CANCEL:
+			Toast.makeText(this, "取消分享", Toast.LENGTH_LONG).show();
+			break;
+
+		case WBConstants.ErrorCode.ERR_FAIL:
+			Toast.makeText(this, "分享失败 " + "Error message:" + arg0.errMsg,
+					Toast.LENGTH_LONG).show();
+			break;
+
+		default:
+			break;
+		}
 	}
 
 }
